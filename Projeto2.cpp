@@ -13,6 +13,10 @@ enum menuAltera
 {
 	alteraNome = 1, alteraCategoria, alteraPreco, alteraClassificacao, alteraSair
 };
+enum menuImprime
+{
+	ordenadoCod = 1, ordenadoNome, ordenadoCategoriaCod, ordenadoCategoriaNome, desordenado, ordenadoSair
+};
 typedef struct {
 	int codigo;
 	char nome[20];
@@ -24,17 +28,38 @@ typedef struct {
 
 int buscaBinaria(int vet[], int chave);
 int leArquivo(filme filmes[]);
+void escreveArquvio(filme filmes[], int qtd);
 void imprime(filme filmeAtual);
 int exclusao(filme filmes[], int posicao, int qtd);
-int insere(filme filmeAtual, int qtd, filme filmes[]);
+int insere(filme filmeAtual, int qtd, filme * filmes);
 
 void main() {
 	filme filmes[MAX];
 	filme filmeAtual;
-	int opcao, opcaoAlterar, qtd = -1, codAtual, posicao;
+	int opcao, opcaoAlterar, opcaoOrdenar, qtd = 2, codAtual, posicao, i;
 	int index[MAX];
 	char novoNome[20], novaCategoria[10];
 	double novoPreco, novaNota;
+	filmes[0].codigo = 2000;
+	strcpy(filmes[0].nome, "Uma Noite no museu");
+	strcpy(filmes[0].categoria,"comedia");
+	filmes[0].classificacao = 5;
+	filmes[0].preco = 1.5;
+
+	filmes[1].codigo = 1000;
+	strcpy(filmes[1].nome, "Uma bela mulher");
+	strcpy(filmes[1].categoria,"romance");
+	filmes[1].classificacao = 6.5;
+	filmes[1].preco = 2.0;
+
+	filmes[2].codigo = 3000;
+	strcpy(filmes[2].nome, "E o vento levou");
+	strcpy(filmes[2].categoria,"romance");
+	filmes[2].classificacao = 8.5;
+	filmes[2].preco = 1.5;
+
+	escreveArquvio(filmes, qtd);
+	
 	//inicializa vetor
 	qtd = leArquivo(filmes);
 	
@@ -80,6 +105,7 @@ void main() {
 			//Chamar a fun��o Busca Bin�ria para localizar a chave;
 			posicao = buscaBinaria(index, codAtual);
 			if (posicao != -1) {
+				do{
 				//Perguntar qual campo ser� modificado, um a um;
 				printf("Digite:\n");
 				printf("%d) para alterar o nome filme.\n", alteraNome);
@@ -117,10 +143,11 @@ void main() {
 				default:
 					printf("Opcao Invalida!\n");
 					break;
-				} while (opcao != alteraSair);
+				}
+				}while(opcaoAlterar != alteraSair);
 				//atualizar arquivo???
-			}
-			else {
+
+			}else{
 				printf("Codigo do filme nao existe.\n");
 			}
 			break;
@@ -134,13 +161,19 @@ void main() {
 				posicao = buscaBinaria(index, filmeAtual.codigo);
 				
 				if (posicao == -1) {
+					// pega as entradas e monta um filme
 					printf("Digite o nome do filme:\n");
 					scanf("%s", filmeAtual.nome);
 					printf("Digite a categoria do filme:\n");
 					scanf("%s", filmeAtual.categoria);
-					//falta classificacao e preco
+					printf("Digite o preco do filme:\n");
+					scanf("%f", &filmeAtual.preco);
+					printf("Digite a nota do filme:\n");
+					scanf("%f", &filmeAtual.classificacao);
+
 					qtd = insere(filmeAtual, qtd, filmes);
 					printf("Insercao feita com sucesso!\n");
+
 					//Atualizar os respectivos Índices;
 				}
 				else {
@@ -170,8 +203,43 @@ void main() {
 			}
 			break;
 		case imprimir:
+			do {
+				printf("Digite:\n");
+				printf("%d) para imprimir ordenado pelo codigo.\n", ordenadoCod);
+				printf("%d) para imprimir ordenado pelo nome.\n", ordenadoNome);
+				printf("%d) para imprimir ordenado pela categoria e codigo.\n", ordenadoCategoriaCod);
+				printf("%d) para imprimir ordenado pela categoria e nome.\n", ordenadoCategoriaNome);
+				printf("%d) para imprimir desordenado.\n", desordenado);
+				printf("%d) Sair.\n", ordenadoSair);
+				scanf("%d", &opcaoOrdenar);
+				switch (opcaoOrdenar) {
+				case ordenadoCod:
+					//imprimir index denso
+					break;
+				case ordenadoNome:
+					//imprimir tabela invertida - ordem alfabetica
+					break;
+				case ordenadoCategoriaCod:
+					//imprimir indice secundario com codigo
+					break;
+				case ordenadoCategoriaNome:
+					//imprimir indice secundario com codigo
+					break;
+				case desordenado:
+					for(i = 0; i<qtd; i++){
+						imprime(filmes[i]);
+					}
+					break;
+				case ordenadoSair:
+					break;
+				default:
+					printf("Opcao Invalida!\n");
+					break;
+				}
+			} while (opcaoOrdenar != ordenadoSair);
 			break;
 		case sair:
+			escreveArquvio(filmes, qtd);
 			break;
 		default:
 			printf("Opcao Invalida!\n");
@@ -200,8 +268,7 @@ int buscaBinaria(int vet[], int chave) {
 //retorna a quantidade de filmes de um arquivo e popula o vetor de filmes
 int leArquivo(filme filmes[]){
 	FILE *arq;
-	filme filmeAtual;
-	int i, qtd = -1;//não existe nenhum filme
+	int qtd = -1;//não existe nenhum filme
 
 	// Abre um arquivo BIN�RIO para LEITURA
 	arq = fopen("arq.dat", "rb");
@@ -210,15 +277,37 @@ int leArquivo(filme filmes[]){
 		return -1; 
 	}
 
-	fseek(arq, 0, SEEK_SET);
+	//fseek(arq, 0, SEEK_SET);
 	while (!feof(arq)) {
 		qtd++;
 		fread(&filmes[qtd], sizeof(filme), 1, arq);
+		//imprime(filmes[qtd]);
+		
 	}
 
 	fclose(arq);
+	//printf("qtd le arq = %d\n",qtd);
 	return qtd;
 	
+}
+
+//escreve no arquivo os filmes no arquivo
+void escreveArquvio(filme filmes[], int qtd){
+	FILE *arq;
+	int i;
+
+	// Abre um arquivo BIN�RIO para ESCRITA
+	arq = fopen("arq.dat", "wb");
+	if (arq == NULL) {
+		printf("Problemas na abertura do arquivo\n");
+	}
+
+	//fseek(arq, 0, SEEK_SET);
+	for(i=0; i<=qtd; i++) {
+		fwrite(&filmes[i], sizeof(filme), 1, arq);  
+	}
+
+	fclose(arq);
 }
 
 //Imprime as informa��es do filme;
@@ -239,7 +328,7 @@ int exclusao(filme filmes[], int posicao, int qtd) {
 }
 
 //inserir filme no final do vetor
-int insere(filme filmeAtual, int qtd, filme filmes[])
+int insere(filme filmeAtual, int qtd, filme * filmes)
 {
 	if(qtd+1<MAX-1)
 		filmes[qtd+1] = filmeAtual;
