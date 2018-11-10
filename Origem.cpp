@@ -63,7 +63,7 @@ void main() {
 	int opcao, opcaoAlterar, opcaoOrdenar,opcaoCat, qtd = 3, codAtual, posicao, i, PRI;
 	int index[MAX][2];//chave, link
 	char novoNome[20], novaCategoria[10];
-	double novoPreco, novaNota;
+	float novoPreco, novaNota;
 	int lista[MAX];
 	indexCategoria indexCat[MAX];
 	int listaCod[MAX];
