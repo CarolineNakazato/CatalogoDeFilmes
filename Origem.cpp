@@ -17,18 +17,28 @@ enum menuImprime
 {
 	ordenadoCod = 1, ordenadoNome, ordenadoCategoriaCod, ordenadoCategoriaNome, desordenado, ordenadoSair
 };
+enum menuCategoria
+{
+	comedia = 1, drama, romance, terror, sairCategoria
+};
+
 typedef struct {
 	int codigo;
 	char nome[20];
-	char categoria[10]; //suspense, romance, terror, comedia
+	char categoria[10]; //drama, romance, terror, comedia
 	float preco;
 	float classificacao; //nota da cr�tica
 }filme;
 
+typedef struct node {
+	int info;
+	struct node * link;
+}no;
+
 typedef struct {
-	int link;
-	char nome[20];
-}indexSecundario;
+	int posicaoInicial;
+	char categoria[20];
+}indexCategoria;
 
 int buscaBinaria(int vet[][2], int chave, int qtd);
 int leArquivo(filme filmes[]);
@@ -40,19 +50,25 @@ void popularIndex(filme filmes[], int index[][2], int qtd);
 void swap(int *x, int *y);
 void bubbleSort(int index[][2], int qtd);
 void imprimeOrdenadoCod(filme filmes[], int index[][2], int qtd);
-void popularIndexSec(filme filmes[], indexSecundario indexSec[], int qtd);
-void swapSec(indexSecundario *x, indexSecundario *y);
-void bubbleSortSec(indexSecundario indexSec[], int qtd);
-void imprimeOrdenadoNome(filme filmes[], indexSecundario indexSec[], int qtd);
-
+int popularLista(filme filmes[], int qtd, int lista[]);
+int menorNome(filme filmes[], int qtd);
+void imprimeOrdNome(int lista[], int PRI, filme filmes[]);
+void popularCatCod(filme filmes[], int qtd, int index[][2], indexCategoria indexCat[], int lista[]);
+void imprimeCatCod(int lista[], indexCategoria index[], filme filmes[]);
+//nao esta pronto
+void popularCatNome(filme filmes[], int qtd, int PRI, int listaNome[], indexCategoria indexCat[], int lista[]);
 void main() {
 	filme filmes[MAX];
 	filme filmeAtual;
-	int opcao, opcaoAlterar, opcaoOrdenar, qtd = 2, codAtual, posicao, i;
+	int opcao, opcaoAlterar, opcaoOrdenar,opcaoCat, qtd = 3, codAtual, posicao, i, PRI;
 	int index[MAX][2];//chave, link
-	indexSecundario indexSec[MAX];
 	char novoNome[20], novaCategoria[10];
 	double novoPreco, novaNota;
+	int lista[MAX];
+	indexCategoria indexCat[MAX];
+	int listaCod[MAX];
+	indexCategoria indexCatNome[MAX];
+	int listaNome[MAX];
 	filmes[0].codigo = 2000;
 	strcpy(filmes[0].nome, "Uma Noite no museu");
 	strcpy(filmes[0].categoria, "comedia");
@@ -60,7 +76,7 @@ void main() {
 	filmes[0].preco = 1.5;
 
 	filmes[1].codigo = 1000;
-	strcpy(filmes[1].nome, "Uma bela mulher");
+	strcpy(filmes[1].nome, "Titanic");
 	strcpy(filmes[1].categoria, "romance");
 	filmes[1].classificacao = 6.5;
 	filmes[1].preco = 2.0;
@@ -77,8 +93,9 @@ void main() {
 	qtd = leArquivo(filmes);
 
 	popularIndex(filmes, index, qtd); //popula index primario (codigo)
-	popularIndexSec(filmes, indexSec, qtd); //popula index secundario (nome)
-
+	PRI = popularLista(filmes, qtd, lista);
+	popularCatCod(filmes, qtd, index, indexCat, listaCod); //popula index e tabelas de categoria por codigo
+	popularCatNome(filmes, qtd, PRI, lista, indexCatNome, listaNome);
 	//for (i = 0; i < qtd; i++) {
 	//	printf("Chave: %d  link = %d\n", index[i][0], index[i][1]);
 	//}
@@ -97,7 +114,7 @@ void main() {
 		{
 		case consultar:
 			//Entrada da chave prim�ria;
-			printf("Digite o codigo do filme:\n");
+			printf("Digite o codigo do filme (apenas numeros de 1000 - 9999):\n");
 			scanf("%d", &codAtual);
 
 			//Carregar �ndice denso (item a);
@@ -118,7 +135,7 @@ void main() {
 			break;
 		case alterar:
 			//Entrada da chave prim�ria;
-			printf("Digite o codigo do filme:\n");
+			printf("Digite o codigo do filme (apenas numeros de 1000 - 9999):\n");
 			scanf("%d", &codAtual);
 
 			//Carregar �ndice denso (item a);
@@ -140,26 +157,57 @@ void main() {
 					switch (opcaoAlterar) {
 					case alteraNome:
 						printf("Digite o nome do filme:\n");
-						scanf("%s", novoNome);
+						fflush(stdin);
+						scanf(" %[^\n]s", novoNome);
 						strcpy(filmes[posicao].nome, novoNome);
 						//atualiza indice Secundario 
-						popularIndexSec(filmes, indexSec, qtd);
+						PRI = popularLista(filmes, qtd, lista);
 
 						break;
 					case alteraCategoria:
-						printf("Digite a categoria do filme:\n");
-						scanf("%s", novaCategoria);
+						do {
+							printf("Escolha uma categoria. Digite (apenas numeros de 1-4):\n");
+							printf("%d) para  comedia.\n", comedia);
+							printf("%d) para drama.\n", drama);
+							printf("%d) para romance.\n", romance);
+							printf("%d) para terror.\n", terror);
+							scanf("%d", &opcaoCat);
+							switch (opcaoCat) {
+							case comedia:
+								strcpy(novaCategoria, "comedia");
+								break;
+							case drama:
+								strcpy(novaCategoria, "drama");
+								break;
+							case romance:
+								strcpy(novaCategoria, "romance");
+								break;
+							case terror:
+								strcpy(novaCategoria, "terror");
+								break;
+							default:
+								printf("Opcao Invalida!\n");
+								break;
+							}
+						} while ((opcaoOrdenar == comedia) ||
+							(opcaoOrdenar == drama) ||
+							(opcaoOrdenar == romance) ||
+							(opcaoOrdenar == terror));
+
 						strcpy(filmes[posicao].nome, novaCategoria);
+						
 						//atualiza indice
+						popularCatCod(filmes, qtd, index, indexCat, listaCod);
+						//popularCatNome(filmes, qtd, PRI, lista, indexCatNome, listaNome);
 
 						break;
 					case alteraPreco:
-						printf("Digite o preco do filme:\n");
+						printf("Digite o preco do filme(apenas numeros, use ponto para virgula):\n");
 						scanf("%f", &novoPreco);
 						filmes[posicao].preco = novoPreco;
 						break;
 					case alteraClassificacao:
-						printf("Digite a nota do filme:\n");
+						printf("Digite a nota do filme(apenas numeros, use ponto para virgula):\n");
 						scanf("%f", &novaNota);
 						filmes[posicao].classificacao = novaNota;
 						break;
@@ -179,7 +227,7 @@ void main() {
 		case inserir:
 			do {
 				//Entrada da chave prim�ria;
-				printf("Digite o codigo do filme:\n");
+				printf("Digite o codigo do filme(apenas numeros de 1000 - 9999):\n");
 				scanf("%d", &filmeAtual.codigo);
 
 				//Verifica se o codigo do filmes ja existe
@@ -188,18 +236,51 @@ void main() {
 				if (posicao == -1) {
 					// pega as entradas e monta um filme
 					printf("Digite o nome do filme:\n");
-					scanf("%s", filmeAtual.nome);
-					printf("Digite a categoria do filme:\n");
-					scanf("%s", filmeAtual.categoria);
-					printf("Digite o preco do filme:\n");
+					fflush(stdin);
+					scanf(" %[^\n]s", filmeAtual.nome);
+					do {
+						printf("Escolha uma categoria. Digite (apenas numeros de 1-4):\n");
+						printf("%d) para  comedia.\n", comedia);
+						printf("%d) para drama.\n", drama);
+						printf("%d) para romance.\n", romance);
+						printf("%d) para terror.\n", terror);
+						scanf("%d", &opcaoCat);
+						switch (opcaoCat) {
+						case comedia:
+							strcpy(filmeAtual.categoria,"comedia");
+							break;
+						case drama:
+							strcpy(filmeAtual.categoria, "drama");
+							break;
+						case romance:
+							strcpy(filmeAtual.categoria, "romance");
+							break;
+						case terror:
+							strcpy(filmeAtual.categoria, "terror");
+							break;
+						default:
+							printf("Opcao Invalida!\n");
+							break;
+						}
+					} while ((opcaoOrdenar == comedia)|| 
+							(opcaoOrdenar == drama)   ||
+							(opcaoOrdenar == romance) || 
+							(opcaoOrdenar == terror));
+
+					printf("Digite o preco do filme(apenas numeros, use ponto para virgula):\n");
 					scanf("%f", &filmeAtual.preco);
-					printf("Digite a nota do filme:\n");
+					printf("Digite a nota do filme(apenas numeros, use ponto para virgula):\n");
 					scanf("%f", &filmeAtual.classificacao);
 
 					qtd = insere(filmeAtual, qtd, filmes);
 					printf("Insercao feita com sucesso!\n");
 
 					//Atualizar os respectivos Índices;
+					popularIndex(filmes, index, qtd); //popula index primario (codigo)
+					PRI = popularLista(filmes, qtd, lista);
+					popularCatCod(filmes, qtd, index, indexCat, listaCod);
+					//popularCatNome(filmes, qtd, PRI, lista, indexCatNome, listaNome);
+					printf("terminou aqui.\n");
 				}
 				else {
 					printf("Codigo do filme ja existe.\n");
@@ -208,12 +289,13 @@ void main() {
 			break;
 		case excluir:
 			//Entrada da chave prim�ria;
-			printf("Digite o codigo do filme:\n");
+			printf("Digite o codigo do filme(apenas numeros de 1000 - 9999):\n");
 			scanf("%d", &codAtual);
 
 			//Carregar �ndice denso (item a);
+			popularIndex(filmes, index, qtd); //popula index primario (codigo)
 
-			//Chamar a fun��o Busca Bin�ria para localizar a chave;
+											  //Chamar a fun��o Busca Bin�ria para localizar a chave;
 			posicao = buscaBinaria(index, codAtual, qtd);
 
 			//Caso exista o valor buscado;
@@ -221,7 +303,10 @@ void main() {
 				//Inserir o registro no final do vetor;
 				qtd = exclusao(filmes, posicao, qtd);
 				//Atualizar os respectivos Índices;
-
+				popularIndex(filmes, index, qtd); //popula index primario (codigo)
+				PRI = popularLista(filmes, qtd, lista);
+				popularCatCod(filmes, qtd, index, indexCat, listaCod);
+				//popularCatNome(filmes, qtd, PRI, lista, indexCatNome, listaNome);
 			}
 			else {
 				printf("Codigo do filme nao existe.\n");
@@ -244,13 +329,15 @@ void main() {
 					break;
 				case ordenadoNome:
 					//imprimir tabela invertida - ordem alfabetica
-					imprimeOrdenadoNome(filmes, indexSec, qtd);
+					imprimeOrdNome(lista, PRI, filmes);
 					break;
 				case ordenadoCategoriaCod:
-					//imprimir indice secundario com codigo
+					 //imprimir indice secundario com codigo
+					imprimeCatCod(listaCod, indexCat, filmes);
 					break;
 				case ordenadoCategoriaNome:
 					//imprimir indice secundario com codigo
+					imprimeCatCod(listaNome, indexCatNome, filmes);
 					break;
 				case desordenado:
 					for (i = 0; i<qtd; i++) {
@@ -334,7 +421,7 @@ void escreveArquvio(filme filmes[], int qtd) {
 	}
 
 	//fseek(arq, 0, SEEK_SET);
-	for (i = 0; i <= qtd; i++) {
+	for (i = 0; i < qtd; i++) {
 		fwrite(&filmes[i], sizeof(filme), 1, arq);
 	}
 
@@ -361,8 +448,9 @@ int exclusao(filme filmes[], int posicao, int qtd) {
 //inserir filme no final do vetor
 int insere(filme filmeAtual, int qtd, filme * filmes)
 {
-	if (qtd + 1<MAX - 1)
-		filmes[qtd + 1] = filmeAtual;
+	printf("qtd + 1=  %d\n", qtd + 1);
+	if (qtd < MAX)
+		filmes[qtd] = filmeAtual;
 	return qtd + 1;
 }
 
@@ -371,9 +459,9 @@ void popularIndex(filme filmes[], int index[][2], int qtd) {
 	for (i = 0; i < qtd; i++) {
 		index[i][0] = filmes[i].codigo; //chave primaria
 		index[i][1] = i; //link
-		//printf("Chave: %d  link = %d\n", index[i][0], index[i][1]);
+						 //printf("Chave: %d  link = %d\n", index[i][0], index[i][1]);
 	}
-	bubbleSort(index,qtd);
+	bubbleSort(index, qtd);
 }
 
 void swap(int *x, int *y) {
@@ -384,7 +472,7 @@ void swap(int *x, int *y) {
 
 void bubbleSort(int index[][2], int qtd) {
 	int i, j;
-	for (i = 0; i < qtd-1; i++)    
+	for (i = 0; i < qtd - 1; i++)
 		for (j = 0; j < qtd - i - 1; j++)
 			if (index[j][0] > index[j + 1][0]) {//comparar chaves
 				swap(&index[j][0], &index[j + 1][0]);//troca chave
@@ -397,33 +485,250 @@ void imprimeOrdenadoCod(filme filmes[], int index[][2], int qtd) {
 		imprime(filmes[index[i][1]]);
 }
 
-void popularIndexSec(filme filmes[], indexSecundario indexSec[], int qtd) {
-	int i;
+int popularLista(filme filmes[], int qtd, int lista[]) {
+	filme aux[MAX];
+	int i, pos, posprox, pri = -1;
+
 	for (i = 0; i < qtd; i++) {
-		strcpy(indexSec[i].nome, filmes[i].nome); //chave secundaria
-		indexSec[i].link = i; //link
-		printf("Chave: %s  link = %d\n", indexSec[i].nome , indexSec[i].link);
+		aux[i] = filmes[i];
 	}
-	bubbleSortSec(indexSec,qtd);
+	
+	//menor nome fica no pri
+	pos = menorNome(aux, qtd);
+	strcpy(aux[pos].nome, "0");//invalido
+	pri = pos;
+
+	for (i = 0; i < qtd; i++) {
+		posprox = menorNome(aux, qtd);
+		strcpy(aux[pos].nome, "0");//invalido
+		lista[pos] =  posprox;
+		pos = posprox;
+	//	printf(" pos = %d, posprox = %d\n", pos, posprox);
+	}
+	pos = menorNome(aux, qtd);
+	lista[pos] = -1;
+	//printf(" pos final = %d\n", pos);
+
+	for (i = 0; i < qtd; i++) {
+	//	printf(" lista[%d] = %d\n", i, lista[i]);
+	}
+		
+	
+	return pri;
 }
 
-void swapSec(indexSecundario *x, indexSecundario *y) {
-	indexSecundario temp = *x;
-	*x = *y;
-	*y = temp;
+int menorNome(filme filmes[], int qtd) {
+	char menor[20];
+	int i = 0, pos = -1; //lista vazia
+	while (strcmp(filmes[i].nome, "0") == 0)
+		i++;
+	if (i < qtd) {
+		strcpy(menor, filmes[i].nome);
+		pos = i;
+	}
+	for (i = 0; i < qtd; i++) {
+		if ((strcmp(menor, filmes[i].nome) > 0) && (strcmp(filmes[i].nome, "0") != 0)) {
+			strcpy(menor, filmes[i].nome);
+			pos = i;
+		}
+	}
+	return pos;
+}
+void imprimeOrdNome(int lista[], int PRI, filme filmes[]) {
+	int x;
+	x = PRI;
+	//printf(" PRI = %d \n", PRI);
+	//imprime(filmes[PRI]);
+	while (lista[x] != -1) {
+		//printf(" x = %d \n", x);
+		//printf(" lista[x] = %d \n", lista[x]);
+		imprime(filmes[x]);
+		x = lista[x];
+	}
+	imprime(filmes[x]);
 }
 
-void bubbleSortSec(indexSecundario indexSec[], int qtd) {
-	int i, j;
-	for (i = 0; i < qtd - 1; i++)
-		for (j = 0; j < qtd - i - 1; j++)
-			if (strcmp(indexSec[j].nome,indexSec[j + 1].nome)>0) {//comparar chaves
-				swapSec(&indexSec[j], &indexSec[j + 1]);
+void popularCatCod(filme filmes[], int qtd, int index[][2], indexCategoria indexCat[], int lista[]) {
+	filme aux[MAX];
+	int i, x, pos, posprox, pri = -1;
+
+
+	//inicializa index com as categoria possiveis
+	strcpy(indexCat[0].categoria, "comedia\0");
+	strcpy(indexCat[1].categoria, "drama\0");
+	strcpy(indexCat[2].categoria, "romance\0");
+	strcpy(indexCat[3].categoria, "terror\0");
+	indexCat[0].posicaoInicial = -1;
+	indexCat[1].posicaoInicial = -1;
+	indexCat[2].posicaoInicial = -1;
+	indexCat[3].posicaoInicial = -1;
+	
+	for (i = 0; i < qtd; i++) {
+		lista[i] = -1;
+	}
+	
+	for (i = 0; i < qtd; i++) {
+		pos = index[i][1];
+		if (strcmp(filmes[pos].categoria, indexCat[0].categoria) == 0) { //comedia
+			if (indexCat[0].posicaoInicial == -1) {
+				indexCat[0].posicaoInicial = pos;
 			}
+			else {
+				x = indexCat[0].posicaoInicial;
+				while (lista[x] != -1) {
+					x = lista[x];
+				}
+				lista[x] = pos;
+			}
+		}
+
+		if (strcmp(filmes[pos].categoria, indexCat[1].categoria) == 0) { //drama
+			if (indexCat[1].posicaoInicial == -1) {
+				indexCat[1].posicaoInicial = pos;
+			}
+			else {
+				x = indexCat[1].posicaoInicial;
+				while (lista[x] != -1) {
+					x = lista[x];
+				}
+				lista[x] = pos;
+			}
+		}
+
+		if (strcmp(filmes[pos].categoria, indexCat[2].categoria) == 0) { //romance
+			if (indexCat[2].posicaoInicial == -1) {
+				indexCat[2].posicaoInicial = pos;
+			}
+			else {
+				x = indexCat[2].posicaoInicial;
+				while (lista[x] != -1) {
+					x = lista[x];
+				}
+				lista[x] = pos;
+			}
+		}
+
+		if (strcmp(filmes[pos].categoria, indexCat[3].categoria) == 0) { //terror
+			if (indexCat[3].posicaoInicial == -1) {
+				indexCat[3].posicaoInicial = pos;
+			}
+			else {
+				x = indexCat[3].posicaoInicial;
+				while (lista[x] != -1) {
+					x = lista[x];
+				}
+				lista[x] = pos;
+			}
+		}
+	}
+	//for (i = 0; i < qtd; i++) {
+		//printf(" lista[%d] = %d\n", i, lista[i]);
+	//}
+	//for (i = 0; i < 4; i++) {
+		//printf(" categoria = %s, PRI = %d\n", indexCat[i].categoria, indexCat[i].posicaoInicial);
+	//}
 }
 
-void imprimeOrdenadoNome(filme filmes[], indexSecundario indexSec[], int qtd) {
-	int i;
-	for (i = 0; i < qtd; i++)
-		imprime(filmes[indexSec[i].link]);
+void imprimeCatCod(int lista[], indexCategoria index[], filme filmes[]) {
+	int x , i;
+	for (i = 0; i < 4; i++) {
+		printf("Categoria = %s.\n", index[i].categoria);
+		x = index[i].posicaoInicial;
+		if (x != -1) {
+			while (lista[x] != -1) {
+				imprime(filmes[x]);
+				x = lista[x];
+			}
+			imprime(filmes[x]);
+		}
+	}
+}
+void popularCatNome(filme filmes[], int qtd, int PRI, int lista[], indexCategoria indexCat[], int listaNome[]) {
+	filme aux[MAX];
+	int i, x, y, pos, posprox, pri = -1;
+
+	//inicializa index com as categoria possiveis
+	strcpy(indexCat[0].categoria, "comedia\0");
+	strcpy(indexCat[1].categoria, "drama\0");
+	strcpy(indexCat[2].categoria, "romance\0");
+	strcpy(indexCat[3].categoria, "terror\0");
+	indexCat[0].posicaoInicial = -1;
+	indexCat[1].posicaoInicial = -1;
+	indexCat[2].posicaoInicial = -1;
+	indexCat[3].posicaoInicial = -1;
+
+	for (i = 0; i < qtd; i++) {
+		listaNome[i] = -1;
+	}
+	x = PRI;
+	while (x != -1) {
+		pos = x;
+		//printf(" pos = %d\n", pos);
+		
+		if (strcmp(filmes[pos].categoria, indexCat[0].categoria) == 0) { //comedia
+			if (indexCat[0].posicaoInicial == -1) {
+				indexCat[0].posicaoInicial = pos;
+			}
+			else {
+				y = indexCat[0].posicaoInicial;
+				while (listaNome[y] != -1) {
+					y = listaNome[y];
+				}
+				listaNome[y] = pos;
+			}
+		}
+
+		if (strcmp(filmes[pos].categoria, indexCat[1].categoria) == 0) { //drama
+			if (indexCat[1].posicaoInicial == -1) {
+				indexCat[1].posicaoInicial = pos;
+			}
+			else {
+				y = indexCat[1].posicaoInicial;
+				while (listaNome[y] != -1) {
+					y = listaNome[y];
+				}
+				listaNome[y] = pos;
+			}
+		}
+
+		if (strcmp(filmes[pos].categoria, indexCat[2].categoria) == 0) { //romance
+			if (indexCat[2].posicaoInicial == -1) {
+				indexCat[2].posicaoInicial = pos;
+			}
+			else {
+				y = indexCat[2].posicaoInicial;
+				while (listaNome[y] != -1) {
+					y = listaNome[y];
+				}
+				listaNome[y] = pos;
+			}
+		}
+
+		if (strcmp(filmes[pos].categoria, indexCat[3].categoria) == 0) { //terror
+			if (indexCat[3].posicaoInicial == -1) {
+				indexCat[3].posicaoInicial = pos;
+			}
+			else {
+				y = indexCat[3].posicaoInicial;
+				while (listaNome[y] != -1) {
+					y = listaNome[y];
+				}
+				listaNome[y] = pos;
+			}
+		}
+
+		x = lista[x];
+	//	printf(" x = %d\n", x);
+	}
+
+
+//	for (i = 0; i < qtd; i++) {
+//		printf(" listaNome[%d] = %d\n", i, listaNome[i]);
+//	}
+//	for (i = 0; i < 4; i++) {
+//		printf(" categoria = %s, PRI = %d\n", indexCat[i].categoria, indexCat[i].posicaoInicial);
+//	}
+
+	printf("terminou na funcao.\n");
+
 }
